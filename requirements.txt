@@ -1,0 +1,8 @@
+# Word Manager Application - Requirements
+# Python 3.6+ required
+
+# No external dependencies required for basic functionality
+# The application uses only Python standard library modules:
+# - sqlite3 (built-in)
+# - hashlib (built-in)
+# - argparse (built-in)
