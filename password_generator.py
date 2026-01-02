@@ -81,20 +81,27 @@ def generate_password(length=16, use_uppercase=True, use_lowercase=True,
     
     # Ensure password contains at least one character from each enabled set
     # This prevents edge cases where a password might only contain one type
-    has_required = True
-    if use_uppercase and not any(c in UPPERCASE for c in password):
-        has_required = False
-    if use_lowercase and not any(c in LOWERCASE for c in password):
-        has_required = False
-    if use_digits and not any(c in DIGITS for c in password):
-        has_required = False
-    if use_symbols and not any(c in SYMBOLS for c in password):
-        has_required = False
+    # Use iterative approach with max retries to avoid infinite recursion
+    max_retries = 10
+    retry_count = 0
     
-    # Regenerate if requirements not met (rare with sufficient length)
-    if not has_required and length >= 4:
-        return generate_password(length, use_uppercase, use_lowercase, 
-                                use_digits, use_symbols)
+    while retry_count < max_retries:
+        has_required = True
+        if use_uppercase and not any(c in UPPERCASE for c in password):
+            has_required = False
+        if use_lowercase and not any(c in LOWERCASE for c in password):
+            has_required = False
+        if use_digits and not any(c in DIGITS for c in password):
+            has_required = False
+        if use_symbols and not any(c in SYMBOLS for c in password):
+            has_required = False
+        
+        if has_required or length < 4:
+            break
+        
+        # Regenerate if requirements not met
+        password = ''.join(secrets.choice(characters) for _ in range(length))
+        retry_count += 1
     
     return password
 

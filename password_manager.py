@@ -22,6 +22,7 @@ Or use libraries like: bcrypt, scrypt, or Argon2 for password hashing.
 
 import argparse
 import sys
+import getpass
 from database import Database, DatabaseError
 from hash_utils import hash_password, generate_salt
 from password_generator import generate_password, estimate_password_strength, generate_passphrase
@@ -56,7 +57,9 @@ def add_entry(db, service, username, password=None, algorithm='md5', use_salt=Fa
         if generate:
             password = generate_password(length=pass_length)
             print(f"\n🔐 Generated password: {password}")
-            print(f"   (Save this password - it won't be shown again!)\n")
+            print(f"   ⚠️  WARNING: Save this password immediately!")
+            print(f"   This password is displayed only once and won't be shown again.")
+            print(f"   Note: Terminal history may log this output.\n")
             
             # Show password strength
             strength, desc = estimate_password_strength(password)
@@ -469,8 +472,7 @@ For more information, see README.md
         elif args.command == 'verify':
             password = args.password
             if not password:
-                # Prompt for password if not provided
-                import getpass
+                # Prompt for password if not provided (more secure than command line)
                 password = getpass.getpass("Enter password to verify: ")
             exit_code = verify_password(db, args.service, args.username, password)
         elif args.command == 'generate':
