@@ -60,7 +60,7 @@ class Database:
         Args:
             hash_value: The hash string to store
             algorithm: The algorithm used to generate the hash
-            salt: Optional salt used (stored as hex string)
+            salt: Optional salt used (bytes or string, stored as hex string)
             
         Returns:
             bool: True if added successfully, False if already exists
@@ -75,8 +75,15 @@ class Database:
             raise ValueError("Algorithm must be a non-empty string")
         
         try:
-            # Convert salt bytes to hex string for storage if provided
-            salt_hex = salt.hex() if salt else None
+            # Convert salt to hex string for storage if provided
+            salt_hex = None
+            if salt is not None:
+                if isinstance(salt, bytes):
+                    salt_hex = salt.hex()
+                elif isinstance(salt, str):
+                    salt_hex = salt
+                else:
+                    raise ValueError(f"Salt must be bytes or string, got {type(salt).__name__}")
             
             self.cursor.execute(
                 'INSERT INTO hashes (hash, algorithm, salt) VALUES (?, ?, ?)',

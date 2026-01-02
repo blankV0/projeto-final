@@ -195,7 +195,6 @@ For more information, see README.md
         '--algorithm', '-a',
         choices=['md5', 'md4'],
         default='md5',
-        metavar='ALG',
         help='Hashing algorithm: md5 (default) or md4'
     )
     add_parser.add_argument(
@@ -225,7 +224,6 @@ For more information, see README.md
         '--algorithm', '-a',
         choices=['md5', 'md4'],
         default='md5',
-        metavar='ALG',
         help='Hashing algorithm: md5 (default) or md4'
     )
     

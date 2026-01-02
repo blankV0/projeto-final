@@ -14,6 +14,10 @@ import hashlib
 import os
 
 
+# Minimum salt length in bytes for security
+MIN_SALT_LENGTH = 8
+
+
 def hash_word(word, algorithm='md5', salt=None):
     """
     Hash a word using the specified algorithm with optional salt.
@@ -78,10 +82,13 @@ def generate_salt(length=16):
     Returns:
         bytes: Random salt
         
+    Raises:
+        ValueError: If length is less than MIN_SALT_LENGTH
+        
     Note:
         In production, use proper key derivation functions (KDF) like PBKDF2,
         bcrypt, scrypt, or Argon2 instead of manual salting with MD5/MD4.
     """
-    if length < 8:
-        raise ValueError("Salt length should be at least 8 bytes")
+    if length < MIN_SALT_LENGTH:
+        raise ValueError(f"Salt length should be at least {MIN_SALT_LENGTH} bytes")
     return os.urandom(length)
