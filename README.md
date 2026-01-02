@@ -27,6 +27,7 @@ This implementation uses obsolete hashing algorithms **intentionally** for educa
 ```
 projeto-final/
 ├── password_manager.py      # Main CLI application
+├── gui.py                   # Tkinter GUI application
 ├── password_generator.py    # Secure password generation
 ├── database.py              # SQLite database operations
 ├── hash_utils.py            # Password hashing (MD5/MD4)
@@ -64,6 +65,23 @@ python3 password_manager.py verify Gmail user@example.com
 # For more help
 python3 password_manager.py --help
 ```
+
+### Launching the GUI
+
+```bash
+# Start the graphical user interface
+python3 gui.py
+```
+
+**Why a GUI?**
+
+The GUI was added on top of the CLI to:
+1. **Improve Accessibility**: Provide a user-friendly interface for users who prefer graphical interaction
+2. **Educational Value**: Demonstrate how to build a GUI that reuses existing business logic modules
+3. **Visual Learning**: Make it easier to understand password management concepts through visual feedback
+4. **Best Practices**: Show proper separation of concerns (GUI vs. business logic)
+
+The GUI reuses the same modules as the CLI (`database.py`, `hash_utils.py`, `password_generator.py`) without duplicating any business logic.
 
 ## 📖 Full Documentation
 
@@ -151,7 +169,7 @@ These limitations are **intentional** to demonstrate why modern algorithms are n
 2. Add master password encryption
 3. Implement password expiration
 4. Check against breach databases
-5. Create GUI interface
+5. ~~Create GUI interface~~ ✓ Implemented!
 
 ## 📖 References
 
