@@ -8,7 +8,6 @@ should NOT be used for security purposes in production. This implementation
 is for educational purposes only.
 """
 
-import sys
 import argparse
 from database import Database
 from hash_utils import hash_word
