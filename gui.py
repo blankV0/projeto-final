@@ -519,7 +519,8 @@ class PasswordManagerGUI:
             _, _, _, stored_hash, stored_algo, salt_hex, _ = entry
             
             # Convert salt from hex string back to bytes
-            salt = bytes.fromhex(salt_hex) if salt_hex else None
+            # Check for empty string as well as None since database may store empty strings
+            salt = bytes.fromhex(salt_hex) if salt_hex and salt_hex.strip() else None
             
             # Hash the provided password with same algorithm and salt
             # (using existing hash_utils module)
@@ -612,13 +613,6 @@ def main():
     Creates the Tkinter root window and initializes the GUI application.
     """
     root = tk.Tk()
-    
-    # Set application icon (if available)
-    try:
-        # This would set an icon if one was provided
-        pass
-    except Exception:
-        pass
     
     # Create and run the application
     app = PasswordManagerGUI(root)
