@@ -49,7 +49,7 @@ class Database:
     
     def __init__(self, db_path='passwords.db'):
         """
-        Initialize database connection and create table if not exists.
+        Initialize database connection and create tables if not exists.
         
         Args:
             db_path: Path to SQLite database file
@@ -62,6 +62,7 @@ class Database:
             self.conn = sqlite3.connect(db_path)
             self.cursor = self.conn.cursor()
             self._create_table()
+            self._create_hashes_table()  # For word_manager.py compatibility
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to initialize database: {e}")
     
@@ -244,3 +245,107 @@ class Database:
                 self.conn.close()
         except sqlite3.Error as e:
             raise DatabaseError(f"Failed to close database: {e}")
+    
+    # =========================================================================
+    # Legacy word_manager.py compatibility methods
+    # =========================================================================
+    
+    def _create_hashes_table(self):
+        """Create legacy hashes table for word_manager.py compatibility."""
+        try:
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS hashes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    hash TEXT NOT NULL UNIQUE,
+                    algorithm TEXT NOT NULL,
+                    salt TEXT
+                )
+            ''')
+            self.conn.commit()
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to create hashes table: {e}")
+    
+    def add_hash(self, hash_value, algorithm, salt=None):
+        """
+        Legacy method for word_manager.py compatibility.
+        Add a hash to the hashes table.
+        
+        Args:
+            hash_value: The hash to store
+            algorithm: Algorithm used ('md5' or 'md4')
+            salt: Optional salt (bytes or string)
+            
+        Returns:
+            bool: True if added, False if already exists
+        """
+        if not hash_value or not isinstance(hash_value, str):
+            raise ValueError("Hash must be a non-empty string")
+        
+        if not algorithm or not isinstance(algorithm, str):
+            raise ValueError("Algorithm must be a non-empty string")
+        
+        # Ensure hashes table exists
+        self._create_hashes_table()
+        
+        try:
+            # Convert salt to hex if needed
+            salt_hex = None
+            if salt is not None:
+                if isinstance(salt, bytes):
+                    salt_hex = salt.hex()
+                elif isinstance(salt, str):
+                    salt_hex = salt
+                else:
+                    raise ValueError(f"Salt must be bytes or string, got {type(salt).__name__}")
+            
+            self.cursor.execute(
+                'INSERT INTO hashes (hash, algorithm, salt) VALUES (?, ?, ?)',
+                (hash_value, algorithm, salt_hex)
+            )
+            self.conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            # Hash already exists
+            return False
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to add hash: {e}")
+    
+    def hash_exists(self, hash_value):
+        """
+        Legacy method for word_manager.py compatibility.
+        Check if a hash exists in the hashes table.
+        
+        Args:
+            hash_value: The hash to check
+            
+        Returns:
+            bool: True if exists, False otherwise
+        """
+        if not hash_value:
+            raise ValueError("Hash value cannot be empty")
+        
+        # Ensure hashes table exists
+        self._create_hashes_table()
+        
+        try:
+            self.cursor.execute('SELECT id FROM hashes WHERE hash = ?', (hash_value,))
+            return self.cursor.fetchone() is not None
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to check hash: {e}")
+    
+    def get_all_hashes(self):
+        """
+        Legacy method for word_manager.py compatibility.
+        Get all hashes from the hashes table.
+        
+        Returns:
+            list: List of tuples (id, hash, algorithm, salt)
+        """
+        # Ensure hashes table exists
+        self._create_hashes_table()
+        
+        try:
+            self.cursor.execute('SELECT id, hash, algorithm, salt FROM hashes')
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            raise DatabaseError(f"Failed to get hashes: {e}")
