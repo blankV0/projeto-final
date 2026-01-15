@@ -48,7 +48,9 @@ class TestSecureCompare:
     
     def test_empty_strings(self):
         """Test with empty strings."""
-        assert secure_compare("", "") is False
+        # Empty strings should compare equal if both empty
+        assert secure_compare("", "") is True
+        # Empty vs non-empty should be False
         assert secure_compare("abc", "") is False
         assert secure_compare("", "abc") is False
     

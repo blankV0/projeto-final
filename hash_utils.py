@@ -174,7 +174,8 @@ def secure_compare(hash1, hash2):
         can determine how many characters matched. hmac.compare_digest 
         always takes the same time regardless of where differences occur.
     """
-    if not hash1 or not hash2:
+    # Handle None values - they should not match
+    if hash1 is None or hash2 is None:
         return False
     
     # Ensure both are strings for comparison

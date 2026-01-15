@@ -1030,12 +1030,13 @@ class PasswordManagerGUI:
         if not self.action_log:
             self.logs_text.insert(tk.END, "No actions logged yet.\n")
         else:
-            # Display logs in reverse order (newest first)
+            # Display logs in reverse order (newest first) by inserting at beginning
             for log_entry in reversed(self.action_log):
-                self.logs_text.insert(tk.END, log_entry + "\n")
+                self.logs_text.insert(1.0, log_entry + "\n")
         
         self.logs_text.config(state='disabled')
-        self.logs_text.see(tk.END)
+        # Scroll to top to show newest entries
+        self.logs_text.see(1.0)
     
     def _clear_logs(self):
         """Clear all logs."""
