@@ -31,11 +31,16 @@ storage. In production, use modern algorithms like bcrypt, scrypt, or Argon2.
 """
 
 import hashlib
+import hmac
 import os
+import re
 
 
 # Minimum salt length in bytes for security
 MIN_SALT_LENGTH = 8
+
+# Password strength requirements
+MIN_PASSWORD_LENGTH = 8
 
 
 def hash_password(password, algorithm='md5', salt=None):
@@ -146,4 +151,131 @@ def generate_salt(length=16):
     if length < MIN_SALT_LENGTH:
         raise ValueError(f"Salt length should be at least {MIN_SALT_LENGTH} bytes")
     return os.urandom(length)
+
+
+def secure_compare(hash1, hash2):
+    """
+    Securely compare two hashes using timing-attack resistant comparison.
+    
+    EDUCATIONAL NOTE: This function uses hmac.compare_digest to prevent
+    timing attacks. Regular string comparison (hash1 == hash2) can leak
+    information about the hash through timing differences.
+    
+    Args:
+        hash1: First hash to compare (string or bytes)
+        hash2: Second hash to compare (string or bytes)
+        
+    Returns:
+        bool: True if hashes match, False otherwise
+        
+    Educational Note:
+        Timing attacks exploit the fact that string comparison typically
+        stops at the first difference. By measuring response times, attackers
+        can determine how many characters matched. hmac.compare_digest 
+        always takes the same time regardless of where differences occur.
+    """
+    # Handle None values - they should not match
+    if hash1 is None or hash2 is None:
+        return False
+    
+    # Ensure both are strings for comparison
+    if isinstance(hash1, bytes):
+        hash1 = hash1.decode('utf-8', errors='ignore')
+    if isinstance(hash2, bytes):
+        hash2 = hash2.decode('utf-8', errors='ignore')
+    
+    return hmac.compare_digest(hash1, hash2)
+
+
+def validate_password_strength(password):
+    """
+    Validate password strength according to security requirements.
+    
+    Requirements:
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one digit
+    - At least one special symbol
+    
+    Args:
+        password: Password to validate (string)
+        
+    Returns:
+        tuple: (is_valid: bool, errors: list, strength_score: int)
+               strength_score: 0-5 (0=very weak, 5=very strong)
+               errors: list of validation error messages
+        
+    Educational Note:
+        Strong passwords are crucial for security. This function enforces
+        basic requirements that increase password entropy and resist
+        dictionary and brute-force attacks.
+    """
+    if not isinstance(password, str):
+        return (False, ["Password must be a string"], 0)
+    
+    errors = []
+    score = 0
+    
+    # Check minimum length
+    if len(password) < MIN_PASSWORD_LENGTH:
+        errors.append(f"Password must be at least {MIN_PASSWORD_LENGTH} characters long")
+    else:
+        score += 1
+        if len(password) >= 12:
+            score += 1
+        if len(password) >= 16:
+            score += 1
+    
+    # Check for uppercase letters
+    if not re.search(r'[A-Z]', password):
+        errors.append("Password must contain at least one uppercase letter (A-Z)")
+    else:
+        score += 1
+    
+    # Check for lowercase letters
+    if not re.search(r'[a-z]', password):
+        errors.append("Password must contain at least one lowercase letter (a-z)")
+    else:
+        score += 1
+    
+    # Check for digits
+    if not re.search(r'\d', password):
+        errors.append("Password must contain at least one digit (0-9)")
+    else:
+        score += 1
+    
+    # Check for special characters
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]', password):
+        errors.append("Password must contain at least one special symbol (!@#$%^&*...)")
+    else:
+        score += 1
+    
+    is_valid = len(errors) == 0
+    
+    # Cap score at 5
+    score = min(score, 5)
+    
+    return (is_valid, errors, score)
+
+
+def get_password_strength_description(score):
+    """
+    Get human-readable description of password strength score.
+    
+    Args:
+        score: Strength score (0-5)
+        
+    Returns:
+        str: Description of password strength
+    """
+    descriptions = {
+        0: "Very Weak - Does not meet minimum requirements",
+        1: "Weak - Meets minimum length only",
+        2: "Fair - Missing some character types",
+        3: "Good - Meets basic requirements",
+        4: "Strong - Good length and character diversity",
+        5: "Very Strong - Excellent password"
+    }
+    return descriptions.get(score, "Unknown")
 

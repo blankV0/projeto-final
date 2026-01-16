@@ -24,7 +24,13 @@ import argparse
 import sys
 import getpass
 from database import Database, DatabaseError
-from hash_utils import hash_password, generate_salt
+from hash_utils import (
+    hash_password, 
+    generate_salt, 
+    secure_compare, 
+    validate_password_strength,
+    get_password_strength_description
+)
 from password_generator import generate_password, estimate_password_strength, generate_passphrase
 
 
@@ -69,8 +75,23 @@ def add_entry(db, service, username, password=None, algorithm='md5', use_salt=Fa
             print(f"✗ Error: Password is required (use --generate to create one)", file=sys.stderr)
             return 1
         
-        # Generate salt if requested
-        salt = generate_salt() if use_salt else None
+        # Validate password strength
+        is_valid, errors, strength_score = validate_password_strength(password)
+        if not is_valid:
+            print(f"\n⚠️  WARNING: Password does not meet security requirements:")
+            for error in errors:
+                print(f"   - {error}")
+            print(f"\n   Password strength: {get_password_strength_description(strength_score)}")
+            
+            # Ask user if they want to continue with weak password
+            response = input("\n   Continue with weak password? (yes/no): ").strip().lower()
+            if response not in ['yes', 'y']:
+                print("✗ Password entry cancelled. Please use a stronger password.")
+                return 1
+            print()
+        
+        # Always use salt for new entries (unique per user)
+        salt = generate_salt()
         
         # Hash the password (NEVER store plaintext!)
         password_hash = hash_password(password, algorithm, salt)
@@ -83,8 +104,7 @@ def add_entry(db, service, username, password=None, algorithm='md5', use_salt=Fa
             print(f"  Service: {service}")
             print(f"  Username: {username}")
             print(f"  Algorithm: {algorithm.upper()}")
-            if salt:
-                print(f"  Salt: {salt.hex()[:32]}... (salted for extra security)")
+            print(f"  Salt: {salt.hex()[:32]}... (unique salt for security)")
             print(f"\n  Educational Note: The password is hashed and stored securely.")
             print(f"  Even database administrators cannot see your password!")
             return 0
@@ -195,12 +215,13 @@ def verify_password(db, service, username, password, algorithm='md5'):
         # Hash the provided password with the same algorithm and salt
         password_hash = hash_password(password, stored_algo, salt)
         
-        # Compare hashes
-        if password_hash == stored_hash:
+        # Compare hashes using secure comparison to prevent timing attacks
+        if secure_compare(password_hash, stored_hash):
             print(f"✓ Password verified successfully!")
             print(f"  Service: {service}")
             print(f"  Username: {username}")
             print(f"\n  The provided password matches the stored hash.")
+            print(f"  Educational Note: secure_compare() was used to prevent timing attacks.")
             return 0
         else:
             print(f"✗ Password verification failed!")

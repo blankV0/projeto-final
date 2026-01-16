@@ -73,6 +73,24 @@ python3 password_manager.py --help
 python3 gui.py
 ```
 
+**GUI Features:**
+
+The modern GUI includes:
+1. **Add Entry**: Create new password entries with automatic password strength validation
+2. **List Entries**: View all stored entries (passwords never shown)
+3. **Verify Password**: Check if a password matches stored hash (with secure comparison)
+4. **Edit Entry**: Modify service names and usernames
+5. **Change Password**: Update passwords with current password verification
+6. **Generate Password**: Create strong random passwords with customizable options
+7. **Action Logs**: Monitor all activities (passwords never logged)
+
+**Security Features:**
+- ✅ Automatic unique salt generation for each entry
+- ✅ Password strength validation (min 8 chars, letters, numbers, symbols)
+- ✅ Weak password warnings with option to continue
+- ✅ Secure hash comparison using `hmac.compare_digest` (timing-attack resistant)
+- ✅ Comprehensive action logging without exposing passwords
+
 **Why a GUI?**
 
 The GUI was added on top of the CLI to:
@@ -113,7 +131,7 @@ CREATE TABLE passwords (
     username TEXT NOT NULL,       -- Username
     password_hash TEXT NOT NULL,  -- NEVER plaintext
     algorithm TEXT NOT NULL,      -- 'md5' or 'md4'
-    salt TEXT,                    -- Optional salt
+    salt TEXT,                    -- Unique salt per entry
     created_at TIMESTAMP,
     UNIQUE(service, username)
 );
@@ -143,7 +161,27 @@ Benefits:
 ### 3. Salt Demonstration
 
 Without salt: `password123 → 482c811da5d... (always same)`  
-With salt: `password123 + salt1 → a7f3c2e... (different each time)`
+With unique salt: `password123 + salt1 → a7f3c2e... (different each time)`
+
+**New in this version**: Every password entry now automatically gets a unique salt!
+
+### 4. Password Strength Requirements
+
+This application enforces modern password requirements:
+- **Minimum 8 characters** (recommended 12+)
+- **At least one uppercase letter** (A-Z)
+- **At least one lowercase letter** (a-z)
+- **At least one digit** (0-9)
+- **At least one special symbol** (!@#$%^&*...)
+
+Weak passwords trigger a warning, allowing users to make informed decisions.
+
+### 5. Timing-Attack Protection
+
+The application uses `hmac.compare_digest()` for password hash comparison, which:
+- Takes constant time regardless of where hashes differ
+- Prevents timing attacks that could leak information
+- Is a security best practice for comparing secrets
 
 ## 🧪 Testing
 
@@ -163,13 +201,37 @@ python3 -m pytest test_word_manager.py --cov=.
 
 These limitations are **intentional** to demonstrate why modern algorithms are needed.
 
-## 🔮 Suggested Improvements
+## ✨ Recent Improvements
 
-1. Replace MD5/MD4 with bcrypt
-2. Add master password encryption
-3. Implement password expiration
-4. Check against breach databases
-5. ~~Create GUI interface~~ ✓ Implemented!
+This version includes major enhancements:
+
+### Security
+- ✅ **Unique salt per user**: Automatically generated for each entry
+- ✅ **Timing-attack protection**: Using `hmac.compare_digest()`
+- ✅ **Password strength validation**: Enforces minimum requirements
+- ✅ **Weak password warnings**: Alerts users before saving weak passwords
+
+### GUI Enhancements
+- ✅ **Enhanced interface**: Better layout, colors, and visual feedback
+- ✅ **Edit entries**: Modify service names and usernames
+- ✅ **Change passwords**: Update passwords with verification
+- ✅ **Action logs**: Monitor all activities (passwords never logged)
+- ✅ **Delete functionality**: Remove entries through GUI
+- ✅ **Improved password generation**: Dedicated buttons in multiple tabs
+
+### Code Quality
+- ✅ **Modular design**: Clean separation between GUI and backend
+- ✅ **Comprehensive logging**: Track all actions without exposing secrets
+- ✅ **Better error handling**: Clear feedback for all operations
+
+## 🔮 Suggested Future Improvements
+
+1. Replace MD5/MD4 with bcrypt/Argon2 (production-ready)
+2. Add master password encryption for database
+3. Implement password expiration policies
+4. Check passwords against breach databases (Have I Been Pwned API)
+5. Add password history to prevent reuse
+6. Implement two-factor authentication demonstration
 
 ## 📖 References
 
